@@ -1,0 +1,140 @@
+package com.example.apipedidos.service;
+
+import com.example.apipedidos.dto.PedidoRequestDTO;
+import com.example.apipedidos.dto.PedidoResponseDTO;
+import com.example.apipedidos.exception.PedidoNotFoundException;
+import com.example.apipedidos.model.Pedido;
+import com.example.apipedidos.repository.PedidoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Serviço responsável pela lógica de negócio relacionada aos pedidos
+ */
+@Service
+@Transactional
+public class PedidoService {
+    
+    private static final Logger log = LoggerFactory.getLogger(PedidoService.class);
+    
+    @Autowired
+    private PedidoRepository pedidoRepository;
+    
+    /**
+     * Cria um novo pedido no sistema
+     * @param request Dados do pedido a ser criado
+     * @return DTO com os dados do pedido criado
+     */
+    public PedidoResponseDTO criarPedido(PedidoRequestDTO request) {
+        log.info("Criando novo pedido para cliente: {}", request.getNomeCliente());
+        
+        // Validar dados do pedido (validações adicionais além das anotações)
+        validarDadosPedido(request);
+        
+        // Converter DTO para entidade
+        Pedido pedido = convertToEntity(request);
+        
+        // Salvar no banco de dados
+        Pedido pedidoSalvo = pedidoRepository.save(pedido);
+        
+        log.info("Pedido criado com sucesso. ID: {}", pedidoSalvo.getId());
+        
+        // Converter entidade para DTO de resposta
+        return convertToResponseDTO(pedidoSalvo);
+    }
+    
+    /**
+     * Lista todos os pedidos do sistema ordenados por data (mais recentes primeiro)
+     * @return Lista de DTOs com os dados dos pedidos
+     */
+    @Transactional(readOnly = true)
+    public List<PedidoResponseDTO> listarTodosPedidos() {
+        log.info("Listando todos os pedidos");
+        
+        List<Pedido> pedidos = pedidoRepository.findAllByOrderByDataPedidoDesc();
+        
+        log.info("Encontrados {} pedidos", pedidos.size());
+        
+        return pedidos.stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Busca um pedido específico pelo seu ID
+     * @param id ID do pedido a ser buscado
+     * @return DTO com os dados do pedido encontrado
+     * @throws PedidoNotFoundException se o pedido não for encontrado
+     */
+    @Transactional(readOnly = true)
+    public PedidoResponseDTO buscarPedidoPorId(Long id) {
+        log.info("Buscando pedido com ID: {}", id);
+        
+        Pedido pedido = pedidoRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Pedido não encontrado com ID: {}", id);
+                    return new PedidoNotFoundException(id);
+                });
+        
+        log.info("Pedido encontrado: {}", pedido.getId());
+        
+        return convertToResponseDTO(pedido);
+    }
+    
+    /**
+     * Valida os dados do pedido aplicando regras de negócio adicionais
+     * @param request DTO com os dados do pedido a serem validados
+     */
+    private void validarDadosPedido(PedidoRequestDTO request) {
+        // As validações básicas já são feitas pelas anotações Jakarta Validation
+        // Aqui podem ser adicionadas validações de negócio mais complexas no futuro
+        
+        log.debug("Validando dados do pedido para cliente: {}", request.getNomeCliente());
+        
+        // Exemplo de validação adicional: normalizar nome do cliente
+        if (request.getNomeCliente() != null) {
+            request.setNomeCliente(request.getNomeCliente().trim());
+        }
+        
+        // Exemplo de validação adicional: normalizar descrição
+        if (request.getDescricao() != null) {
+            request.setDescricao(request.getDescricao().trim());
+        }
+    }
+    
+    /**
+     * Converte um DTO de request para uma entidade Pedido
+     * @param request DTO com os dados do pedido
+     * @return Entidade Pedido
+     */
+    private Pedido convertToEntity(PedidoRequestDTO request) {
+        Pedido pedido = new Pedido();
+        pedido.setNomeCliente(request.getNomeCliente());
+        pedido.setDescricao(request.getDescricao());
+        pedido.setValor(request.getValor());
+        // dataPedido será definida automaticamente pelo @PrePersist
+        
+        return pedido;
+    }
+    
+    /**
+     * Converte uma entidade Pedido para um DTO de response
+     * @param pedido Entidade Pedido
+     * @return DTO de response com os dados do pedido
+     */
+    private PedidoResponseDTO convertToResponseDTO(Pedido pedido) {
+        PedidoResponseDTO response = new PedidoResponseDTO();
+        response.setId(pedido.getId());
+        response.setNomeCliente(pedido.getNomeCliente());
+        response.setDescricao(pedido.getDescricao());
+        response.setValor(pedido.getValor());
+        response.setDataPedido(pedido.getDataPedido());
+        return response;
+    }
+}
