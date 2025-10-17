@@ -51,6 +51,9 @@ cd api-pedidos
 # Compilar o projeto
 mvn clean compile
 
+# Compilar o projeto ignorando 
+mvn ./
+
 # Executar testes
 mvn test
 
@@ -63,6 +66,7 @@ A aplicação estará disponível em: `http://localhost:8080`
 ### Gerando JAR executável
 ```bash
 mvn clean package
+mvn clean package -DskipTests
 java -jar target/api-pedidos-0.0.1-SNAPSHOT.jar
 ```
 

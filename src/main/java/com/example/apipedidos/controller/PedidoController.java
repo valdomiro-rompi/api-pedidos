@@ -1,5 +1,6 @@
 package com.example.apipedidos.controller;
 
+import com.example.apipedidos.dto.FilaStatusDTO;
 import com.example.apipedidos.dto.PedidoRequestDTO;
 import com.example.apipedidos.dto.PedidoResponseDTO;
 import com.example.apipedidos.service.PedidoService;
@@ -133,38 +134,23 @@ public class PedidoController {
         int tamanho = pedidoService.getTamanhoDaFila();
         boolean vazia = pedidoService.isFilaVazia();
         
-        FilaStatusDTO status = new FilaStatusDTO(tamanho, vazia);
+        FilaStatusDTO status = new FilaStatusDTO(tamanho,vazia);
         
         log.info("Status da fila - Tamanho: {}, Vazia: {}", tamanho, vazia);
         return ResponseEntity.ok(status);
     }
     
     /**
-     * DTO para retornar informações sobre o status da fila
+     * Endpoint para listar todas as mensagens (pedidos) atualmente na fila
+     * 
+     * @return ResponseEntity com a lista de pedidos na fila e status 200 OK
      */
-    public static class FilaStatusDTO {
-        private int tamanho;
-        private boolean vazia;
-        
-        public FilaStatusDTO(int tamanho, boolean vazia) {
-            this.tamanho = tamanho;
-            this.vazia = vazia;
-        }
-        
-        public int getTamanho() {
-            return tamanho;
-        }
-        
-        public void setTamanho(int tamanho) {
-            this.tamanho = tamanho;
-        }
-        
-        public boolean isVazia() {
-            return vazia;
-        }
-        
-        public void setVazia(boolean vazia) {
-            this.vazia = vazia;
-        }
+    @GetMapping("/fila/mensagens")
+    public ResponseEntity<List<PedidoResponseDTO>> listarMensagensDaFila() {
+        log.info("Recebida requisição GET para listar mensagens da fila");
+        List<PedidoResponseDTO> mensagens = pedidoService.obterTodasAsMensagens();
+        log.info("Retornando {} mensagens da fila", mensagens.size());
+        return ResponseEntity.ok(mensagens);
     }
+   
 }

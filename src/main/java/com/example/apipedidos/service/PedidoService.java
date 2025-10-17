@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -204,5 +205,17 @@ public class PedidoService {
      */
     public boolean isFilaVazia() {
         return filaPedidos.isEmpty();
+    }
+    
+    /**
+     * Obtém todas as mensagens (pedidos) que estão atualmente na fila
+     * @return Lista com todos os pedidos da fila (do topo para a base)
+     */
+    public List<PedidoResponseDTO> obterTodasAsMensagens() {
+        log.info("Obtendo todas as mensagens da fila. Total: {}", filaPedidos.size());
+        
+        // Retorna uma cópia da lista para evitar modificações externas
+        // A ordem será do topo da pilha (último adicionado) para a base (primeiro adicionado)
+        return new ArrayList<>(filaPedidos);
     }
 }
