@@ -11,6 +11,8 @@ Sistema backend responsável por processar e armazenar pedidos de clientes, ofer
 - ✅ Criar novos pedidos
 - ✅ Listar todos os pedidos
 - ✅ Buscar pedido por ID
+- ✅ **Fila de pedidos com Stack (LIFO)**
+- ✅ **Processamento automático de fila**
 - ✅ Validação robusta de dados
 - ✅ Logs estruturados e auditoria
 - ✅ Métricas e monitoramento
@@ -71,6 +73,23 @@ java -jar target/api-pedidos-0.0.1-SNAPSHOT.jar
 http://localhost:8080/api/pedidos
 ```
 
+### 📮 Testando com Postman
+
+A coleção do Postman está disponível em `docs/API_Pedidos.postman_collection.json` e inclui:
+
+- **Endpoints básicos**: Criar, listar e buscar pedidos
+- **Endpoints da fila**: Status, visualizar e processar fila
+- **Cenário de teste completo**: 10 chamadas sequenciais para testar a fila LIFO
+- **Testes de validação**: Casos de erro e validações
+
+**Como importar:**
+1. Abra o Postman
+2. Clique em "Import"
+3. Selecione o arquivo `docs/API_Pedidos.postman_collection.json`
+4. Importe também o ambiente: `docs/API_Pedidos.postman_environment.json`
+
+📖 **Guia detalhado**: [docs/POSTMAN_USAGE.md](docs/POSTMAN_USAGE.md)
+
 ### Endpoints Disponíveis
 
 #### 📝 Criar Pedido
@@ -130,15 +149,55 @@ GET /api/pedidos/{id}
 }
 ```
 
+### 📋 Endpoints da Fila de Pedidos
+
+#### 📊 Status da Fila
+```http
+GET /api/pedidos/fila/status
+```
+
+**Resposta (200 OK):**
+```json
+{
+    "tamanho": 3,
+    "vazia": false
+}
+```
+
+#### 👀 Visualizar Próximo Pedido
+```http
+GET /api/pedidos/fila/proximo
+```
+
+**Resposta (200 OK):** Retorna o próximo pedido sem removê-lo
+**Resposta (204 No Content):** Fila vazia
+
+#### ⚡ Processar Próximo Pedido
+```http
+POST /api/pedidos/fila/processar
+```
+
+**Resposta (200 OK):** Remove e retorna o próximo pedido (LIFO)
+**Resposta (204 No Content):** Fila vazia
+
 ### Códigos de Status HTTP
 
 | Código | Descrição |
 |--------|-----------|
 | 200 | Requisição bem-sucedida |
 | 201 | Recurso criado com sucesso |
+| 204 | Sem conteúdo (fila vazia) |
 | 400 | Dados inválidos na requisição |
 | 404 | Recurso não encontrado |
 | 500 | Erro interno do servidor |
+
+### 🎯 Comportamento da Fila (LIFO)
+
+A fila de pedidos funciona como uma **Stack (pilha)**:
+- **Último pedido criado** = **Primeiro a ser processado**
+- **Primeiro pedido criado** = **Último a ser processado**
+- **Adição automática**: Todo pedido criado é automaticamente adicionado à fila
+- **Processamento manual**: Use os endpoints da fila para processar pedidos
 
 ## 🏗️ Arquitetura
 
@@ -291,6 +350,8 @@ docker run -p 8080:8080 api-pedidos
 
 ### Versão 1.0 (Atual)
 - ✅ CRUD básico de pedidos
+- ✅ **Fila de pedidos com Stack (LIFO)**
+- ✅ **Endpoints de gerenciamento da fila**
 - ✅ Validações de entrada
 - ✅ Testes automatizados
 - ✅ Logs e métricas

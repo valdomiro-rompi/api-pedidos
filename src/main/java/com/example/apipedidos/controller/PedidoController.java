@@ -80,4 +80,91 @@ public class PedidoController {
         
         return ResponseEntity.ok(pedido);
     }
+    
+    /**
+     * Endpoint para processar o próximo pedido da fila (remove da fila)
+     * 
+     * @return ResponseEntity com o pedido processado e status 200 OK, ou 204 No Content se fila vazia
+     */
+    @PostMapping("/fila/processar")
+    public ResponseEntity<PedidoResponseDTO> processarProximoPedido() {
+        log.info("Recebida requisição POST para processar próximo pedido da fila");
+        
+        PedidoResponseDTO pedido = pedidoService.processarProximoPedidoDaFila();
+        
+        if (pedido == null) {
+            log.info("Fila de pedidos está vazia");
+            return ResponseEntity.noContent().build();
+        }
+        
+        log.info("Pedido processado da fila: ID {}", pedido.getId());
+        return ResponseEntity.ok(pedido);
+    }
+    
+    /**
+     * Endpoint para visualizar o próximo pedido da fila (sem remover)
+     * 
+     * @return ResponseEntity com o próximo pedido e status 200 OK, ou 204 No Content se fila vazia
+     */
+    @GetMapping("/fila/proximo")
+    public ResponseEntity<PedidoResponseDTO> visualizarProximoPedido() {
+        log.info("Recebida requisição GET para visualizar próximo pedido da fila");
+        
+        PedidoResponseDTO pedido = pedidoService.visualizarProximoPedidoDaFila();
+        
+        if (pedido == null) {
+            log.info("Fila de pedidos está vazia");
+            return ResponseEntity.noContent().build();
+        }
+        
+        log.info("Próximo pedido da fila: ID {}", pedido.getId());
+        return ResponseEntity.ok(pedido);
+    }
+    
+    /**
+     * Endpoint para obter informações sobre o status da fila
+     * 
+     * @return ResponseEntity com informações da fila e status 200 OK
+     */
+    @GetMapping("/fila/status")
+    public ResponseEntity<FilaStatusDTO> obterStatusDaFila() {
+        log.info("Recebida requisição GET para obter status da fila");
+        
+        int tamanho = pedidoService.getTamanhoDaFila();
+        boolean vazia = pedidoService.isFilaVazia();
+        
+        FilaStatusDTO status = new FilaStatusDTO(tamanho, vazia);
+        
+        log.info("Status da fila - Tamanho: {}, Vazia: {}", tamanho, vazia);
+        return ResponseEntity.ok(status);
+    }
+    
+    /**
+     * DTO para retornar informações sobre o status da fila
+     */
+    public static class FilaStatusDTO {
+        private int tamanho;
+        private boolean vazia;
+        
+        public FilaStatusDTO(int tamanho, boolean vazia) {
+            this.tamanho = tamanho;
+            this.vazia = vazia;
+        }
+        
+        public int getTamanho() {
+            return tamanho;
+        }
+        
+        public void setTamanho(int tamanho) {
+            this.tamanho = tamanho;
+        }
+        
+        public boolean isVazia() {
+            return vazia;
+        }
+        
+        public void setVazia(boolean vazia) {
+            this.vazia = vazia;
+        }
+    }
 }

@@ -9,9 +9,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 /**
@@ -26,11 +28,15 @@ public class PedidoService {
     @Autowired
     private PedidoRepository pedidoRepository;
     
+    // Stack para gerenciar fila de pedidos criados
+    private final Stack<PedidoResponseDTO> filaPedidos = new Stack<>();
+    
     /**
      * Cria um novo pedido no sistema
      * @param request Dados do pedido a ser criado
      * @return DTO com os dados do pedido criado
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public PedidoResponseDTO criarPedido(PedidoRequestDTO request) {
         log.info("Criando novo pedido para cliente: {}", request.getNomeCliente());
         
@@ -46,7 +52,12 @@ public class PedidoService {
         log.info("Pedido criado com sucesso. ID: {}", pedidoSalvo.getId());
         
         // Converter entidade para DTO de resposta
-        return convertToResponseDTO(pedidoSalvo);
+        PedidoResponseDTO pedidoResponse = convertToResponseDTO(pedidoSalvo);
+        
+        // Adicionar pedido à fila (Stack)
+        adicionarPedidoNaFila(pedidoResponse);
+        
+        return pedidoResponse;
     }
     
     /**
@@ -136,5 +147,62 @@ public class PedidoService {
         response.setValor(pedido.getValor());
         response.setDataPedido(pedido.getDataPedido());
         return response;
+    }
+    
+    /**
+     * Adiciona um pedido à fila (Stack)
+     * @param pedido DTO do pedido a ser adicionado à fila
+     */
+    private void adicionarPedidoNaFila(PedidoResponseDTO pedido) {
+        filaPedidos.push(pedido);
+        log.info("Pedido ID {} adicionado à fila. Total de pedidos na fila: {}", 
+                pedido.getId(), filaPedidos.size());
+    }
+    
+    /**
+     * Remove e retorna o último pedido da fila (LIFO - Last In, First Out)
+     * @return DTO do pedido removido da fila, ou null se a fila estiver vazia
+     */
+    public PedidoResponseDTO processarProximoPedidoDaFila() {
+        if (filaPedidos.isEmpty()) {
+            log.info("Fila de pedidos está vazia");
+            return null;
+        }
+        
+        PedidoResponseDTO pedido = filaPedidos.pop();
+        log.info("Pedido ID {} removido da fila. Pedidos restantes na fila: {}", 
+                pedido.getId(), filaPedidos.size());
+        return pedido;
+    }
+    
+    /**
+     * Retorna o próximo pedido da fila sem removê-lo
+     * @return DTO do próximo pedido da fila, ou null se a fila estiver vazia
+     */
+    public PedidoResponseDTO visualizarProximoPedidoDaFila() {
+        if (filaPedidos.isEmpty()) {
+            log.info("Fila de pedidos está vazia");
+            return null;
+        }
+        
+        PedidoResponseDTO pedido = filaPedidos.peek();
+        log.info("Próximo pedido da fila: ID {}", pedido.getId());
+        return pedido;
+    }
+    
+    /**
+     * Retorna o tamanho atual da fila de pedidos
+     * @return Número de pedidos na fila
+     */
+    public int getTamanhoDaFila() {
+        return filaPedidos.size();
+    }
+    
+    /**
+     * Verifica se a fila de pedidos está vazia
+     * @return true se a fila estiver vazia, false caso contrário
+     */
+    public boolean isFilaVazia() {
+        return filaPedidos.isEmpty();
     }
 }
