@@ -4,8 +4,8 @@ import com.example.apipedidos.dto.FilaStatusDTO;
 import com.example.apipedidos.dto.PedidoRequestDTO;
 import com.example.apipedidos.dto.PedidoResponseDTO;
 import com.example.apipedidos.service.PedidoService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -148,7 +148,9 @@ public class PedidoController {
     @GetMapping("/fila/mensagens")
     public ResponseEntity<List<PedidoResponseDTO>> listarMensagensDaFila() {
         log.info("Recebida requisição GET para listar mensagens da fila");
+
         List<PedidoResponseDTO> mensagens = pedidoService.obterTodasAsMensagens();
+        
         log.info("Retornando {} mensagens da fila", mensagens.size());
         return ResponseEntity.ok(mensagens);
     }

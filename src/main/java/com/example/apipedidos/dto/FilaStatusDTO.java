@@ -1,6 +1,5 @@
 package com.example.apipedidos.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

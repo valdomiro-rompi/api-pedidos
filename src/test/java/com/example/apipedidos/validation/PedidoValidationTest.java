@@ -1,16 +1,16 @@
 package com.example.apipedidos.validation;
 
 import com.example.apipedidos.dto.PedidoRequestDTO;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import jakarta.validation.ValidatorFactory;
-import jakarta.validation.Validation;
+import javax.validation.ValidatorFactory;
+import javax.validation.Validation;
 import java.math.BigDecimal;
 import java.util.Set;
 

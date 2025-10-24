@@ -1,6 +1,7 @@
 package com.example.apipedidos.config;
 
 import com.example.apipedidos.dto.PedidoRequestDTO;
+import com.example.apipedidos.dto.PedidoResponseDTO;
 import com.example.apipedidos.service.PedidoService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -39,7 +41,7 @@ class LoggingAspectTest {
         request.setValor(new BigDecimal("100.00"));
         
         assertDoesNotThrow(() -> {
-            var response = pedidoService.criarPedido(request);
+            PedidoResponseDTO response = pedidoService.criarPedido(request);
             assertNotNull(response);
             assertNotNull(response.getId());
         });
@@ -49,7 +51,7 @@ class LoggingAspectTest {
     void testListServiceLoggingAspect() {
         // Testa se o aspecto de logging funciona para operações de listagem
         assertDoesNotThrow(() -> {
-            var pedidos = pedidoService.listarTodosPedidos();
+            List<PedidoResponseDTO> pedidos = pedidoService.listarTodosPedidos();
             assertNotNull(pedidos);
         });
     }

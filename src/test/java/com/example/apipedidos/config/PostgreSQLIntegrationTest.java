@@ -23,6 +23,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -127,7 +128,7 @@ public class PostgreSQLIntegrationTest {
         assertThat(saved1.getId()).isNotEqualTo(saved2.getId());
 
         // Test ordering
-        var allPedidos = pedidoRepository.findAllByOrderByDataPedidoDesc();
+        List<Pedido> allPedidos = pedidoRepository.findAllByOrderByDataPedidoDesc();
         assertThat(allPedidos).hasSize(2);
         // The second one should be first due to DESC ordering
         assertThat(allPedidos.get(0).getId()).isEqualTo(saved2.getId());
