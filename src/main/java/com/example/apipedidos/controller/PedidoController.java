@@ -91,7 +91,7 @@ public class PedidoController {
     public ResponseEntity<PedidoResponseDTO> processarProximoPedido() {
         log.info("Recebida requisição POST para processar próximo pedido da fila");
         
-        PedidoResponseDTO pedido = pedidoService.processarProximoPedidoDaFila();
+        PedidoResponseDTO pedido = pedidoService.processarProximoPedidoDaFilaRaw();
         
         if (pedido == null) {
             log.info("Fila de pedidos está vazia");
@@ -111,7 +111,7 @@ public class PedidoController {
     public ResponseEntity<PedidoResponseDTO> visualizarProximoPedido() {
         log.info("Recebida requisição GET para visualizar próximo pedido da fila");
         
-        PedidoResponseDTO pedido = pedidoService.visualizarProximoPedidoDaFila();
+        PedidoResponseDTO pedido = pedidoService.visualizarProximoPedidoDaFilaRaw();
         
         if (pedido == null) {
             log.info("Fila de pedidos está vazia");
@@ -131,10 +131,12 @@ public class PedidoController {
     public ResponseEntity<FilaStatusDTO> obterStatusDaFila() {
         log.info("Recebida requisição GET para obter status da fila");
         
-        int tamanho = pedidoService.getTamanhoDaFila();
-        boolean vazia = pedidoService.isFilaVazia();
+        int tamanho = pedidoService.getTamanhoDaFilaRaw();
+        boolean vazia = pedidoService.isFilaVaziaRaw();
         
-        FilaStatusDTO status = new FilaStatusDTO(tamanho,vazia);
+        FilaStatusDTO status = new FilaStatusDTO();
+        status.setTamanho(tamanho);
+        status.setVazia(vazia);
         
         log.info("Status da fila - Tamanho: {}, Vazia: {}", tamanho, vazia);
         return ResponseEntity.ok(status);
@@ -148,7 +150,7 @@ public class PedidoController {
     @GetMapping("/fila/mensagens")
     public ResponseEntity<List<PedidoResponseDTO>> listarMensagensDaFila() {
         log.info("Recebida requisição GET para listar mensagens da fila");
-        List<PedidoResponseDTO> mensagens = pedidoService.obterTodasAsMensagens();
+        List<PedidoResponseDTO> mensagens = pedidoService.obterTodasAsMensagensRaw();
         log.info("Retornando {} mensagens da fila", mensagens.size());
         return ResponseEntity.ok(mensagens);
     }

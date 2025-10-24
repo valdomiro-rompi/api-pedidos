@@ -4,6 +4,7 @@ import com.example.apipedidos.dto.PedidoRequestDTO;
 import com.example.apipedidos.dto.PedidoResponseDTO;
 import com.example.apipedidos.exception.PedidoNotFoundException;
 import com.example.apipedidos.model.Pedido;
+import com.example.apipedidos.model.PilhaRaw;
 import com.example.apipedidos.repository.PedidoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,8 @@ public class PedidoService {
     
     // Stack para gerenciar fila de pedidos criados
     private final Stack<PedidoResponseDTO> filaPedidos = new Stack<>();
+
+    private final PilhaRaw pilhaRaw = new PilhaRaw(1000);
     
     /**
      * Cria um novo pedido no sistema
@@ -55,8 +58,8 @@ public class PedidoService {
         // Converter entidade para DTO de resposta
         PedidoResponseDTO pedidoResponse = convertToResponseDTO(pedidoSalvo);
         
-        // Adicionar pedido à fila (Stack)
-        adicionarPedidoNaFila(pedidoResponse);
+        // Adicionar pedido à fila (PilhaRaw)
+        adicionarPedidoNaFilaRaw(pedidoResponse);
         
         return pedidoResponse;
     }
@@ -156,43 +159,92 @@ public class PedidoService {
      */
     private void adicionarPedidoNaFila(PedidoResponseDTO pedido) {
         filaPedidos.push(pedido);
-        log.info("Pedido ID {} adicionado à fila. Total de pedidos na fila: {}", 
+        log.info("Pedido ID {} adicionado à fila usando Stack. Total de pedidos na fila: {}", 
                 pedido.getId(), filaPedidos.size());
     }
     
     /**
-     * Remove e retorna o último pedido da fila (LIFO - Last In, First Out)
+     * Adiciona um pedido à fila usando estrutura de dados (PilhaRaw)
+     * @param pedido
+     */
+    private void adicionarPedidoNaFilaRaw(PedidoResponseDTO pedido) {
+        Pedido pedidoEntity = new Pedido();
+        pedidoEntity.setId(pedido.getId());
+        pedidoEntity.setNomeCliente(pedido.getNomeCliente());
+        pedidoEntity.setDescricao(pedido.getDescricao());
+        pedidoEntity.setValor(pedido.getValor());
+        pedidoEntity.setDataPedido(pedido.getDataPedido());
+        
+        pilhaRaw.push(pedidoEntity);
+        log.info("Pedido ID {} adicionado à fila usando PilhaRaw (estrutura crua). Total de pedidos na fila: {}", 
+                pedido.getId(), pilhaRaw.size());
+    }
+    
+    /**
+     * Remove e retorna o último pedido da fila usando Stack
      * @return DTO do pedido removido da fila, ou null se a fila estiver vazia
      */
     public PedidoResponseDTO processarProximoPedidoDaFila() {
         if (filaPedidos.isEmpty()) {
-            log.info("Fila de pedidos está vazia");
+            log.info("Fila de pedidos (Stack) está vazia");
             return null;
         }
         
-        PedidoResponseDTO pedido = filaPedidos.pop();
-        log.info("Pedido ID {} removido da fila. Pedidos restantes na fila: {}", 
-                pedido.getId(), filaPedidos.size());
-        return pedido;
+        PedidoResponseDTO pedidoRemovido = filaPedidos.pop();
+        log.info("Pedido ID {} removido da fila usando Stack. Pedidos restantes na fila: {}", 
+                pedidoRemovido.getId(), filaPedidos.size());
+        return pedidoRemovido;
     }
     
     /**
-     * Retorna o próximo pedido da fila sem removê-lo
+     * @return 
+     */
+    public PedidoResponseDTO processarProximoPedidoDaFilaRaw() {
+        if (pilhaRaw.isEmpty()) {
+            log.info("Fila de pedidos (PilhaRaw) está vazia");
+            return null;
+        }
+        
+        Pedido pedidoRemovido = pilhaRaw.pop();
+        PedidoResponseDTO pedidoResponse = convertToResponseDTO(pedidoRemovido);
+        log.info("Pedido ID {} removido da fila usando PilhaRaw. Pedidos restantes na fila: {}", 
+                pedidoResponse.getId(), pilhaRaw.size());
+        return pedidoResponse;
+    }
+    
+    /**
+     * Retorna o próximo pedido da fila sem removê-lo usando Stack
      * @return DTO do próximo pedido da fila, ou null se a fila estiver vazia
      */
     public PedidoResponseDTO visualizarProximoPedidoDaFila() {
         if (filaPedidos.isEmpty()) {
-            log.info("Fila de pedidos está vazia");
+            log.info("Fila de pedidos (Stack) está vazia");
             return null;
         }
         
-        PedidoResponseDTO pedido = filaPedidos.peek();
-        log.info("Próximo pedido da fila: ID {}", pedido.getId());
-        return pedido;
+        PedidoResponseDTO pedidoTopo = filaPedidos.peek();
+        log.info("Próximo pedido da fila (Stack): ID {}", pedidoTopo.getId());
+        return pedidoTopo;
     }
     
     /**
-     * Retorna o tamanho atual da fila de pedidos
+     * Retorna o próximo pedido da fila sem removê-lo usando estrutura de dados (PilhaRaw)
+     * @return DTO do próximo pedido da fila, ou null se a fila estiver vazia
+     */
+    public PedidoResponseDTO visualizarProximoPedidoDaFilaRaw() {
+        if (pilhaRaw.isEmpty()) {
+            log.info("Fila de pedidos (PilhaRaw) está vazia");
+            return null;
+        }
+        
+        Pedido pedidoTopo = pilhaRaw.peek();
+        PedidoResponseDTO pedidoResponse = convertToResponseDTO(pedidoTopo);
+        log.info("Próximo pedido da fila (PilhaRaw): ID {}", pedidoResponse.getId());
+        return pedidoResponse;
+    }
+    
+    /**
+     * Retorna o tamanho atual da fila de pedidos usando Stack
      * @return Número de pedidos na fila
      */
     public int getTamanhoDaFila() {
@@ -200,7 +252,15 @@ public class PedidoService {
     }
     
     /**
-     * Verifica se a fila de pedidos está vazia
+     * Retorna o tamanho atual da fila de pedidos usando estrutura de dados(PilhaRaw)
+     * @return Número de pedidos na fila
+     */
+    public int getTamanhoDaFilaRaw() {
+        return pilhaRaw.size();
+    }
+    
+    /**
+     * Verifica se a fila de pedidos está vazia usando Stack
      * @return true se a fila estiver vazia, false caso contrário
      */
     public boolean isFilaVazia() {
@@ -208,14 +268,45 @@ public class PedidoService {
     }
     
     /**
-     * Obtém todas as mensagens (pedidos) que estão atualmente na fila
+     * Verifica se a fila de pedidos está vazia usando estrutura de dados (PilhaRaw)
+     * @return true se a fila estiver vazia, false caso contrário
+     */
+    public boolean isFilaVaziaRaw() {
+        return pilhaRaw.isEmpty();
+    }
+    
+    /**
+     * Obtém todas as mensagens (pedidos) que estão atualmente na fila usando Stack
      * @return Lista com todos os pedidos da fila (do topo para a base)
      */
     public List<PedidoResponseDTO> obterTodasAsMensagens() {
-        log.info("Obtendo todas as mensagens da fila. Total: {}", filaPedidos.size());
+        log.info("Obtendo todas as mensagens da fila (Stack). Total: {}", filaPedidos.size());
         
         // Retorna uma cópia da lista para evitar modificações externas
-        // A ordem será do topo da pilha (último adicionado) para a base (primeiro adicionado)
         return new ArrayList<>(filaPedidos);
+    }
+    
+    /**
+     * Obtém todas as mensagens (pedidos) que estão atualmente na fila usando estrutura de dados (PilhaRaw)
+     * @return Lista com todos os pedidos da fila (do topo para a base)
+     */
+    public List<PedidoResponseDTO> obterTodasAsMensagensRaw() {
+        log.info("Obtendo todas as mensagens da fila (PilhaRaw). Total: {}", pilhaRaw.size());
+        
+        List<PedidoResponseDTO> pedidos = new ArrayList<>();
+        
+        PilhaRaw pilhaTemporaria = new PilhaRaw(pilhaRaw.size());
+        
+        while (!pilhaRaw.isEmpty()) {
+            Pedido pedido = pilhaRaw.pop();
+            pedidos.add(convertToResponseDTO(pedido));
+            pilhaTemporaria.push(pedido);
+        }
+        
+        while (!pilhaTemporaria.isEmpty()) {
+            pilhaRaw.push(pilhaTemporaria.pop());
+        }
+        
+        return pedidos;
     }
 }
